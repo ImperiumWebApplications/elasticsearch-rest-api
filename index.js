@@ -14,27 +14,53 @@ const con = mysql.createConnection({
   database: "regions_master",
 });
 
-app.post("/create_index", function (req, res) {
-  client.indices.create(
-    {
-      index: "index_regions",
-      body: {
-        mappings: {
-          properties: {
-            name_suggest: { type: "completion" },
+app.post("/index", function (req, res) {
+  client.indices.exists({ index: "index_regions" }, (err, resp, status) => {
+    if (err) {
+      console.log(err);
+    } else if (!resp) {
+      client.indices.create(
+        {
+          index: "index_regions",
+          body: {
+            mappings: {
+              properties: {
+                name_suggest: { type: "completion" },
+              },
+            },
           },
         },
-      },
-    },
-    function (err, resp, status) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(resp);
-        res.send("Index created with correct mapping");
-      }
+        function (err, resp, status) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(resp);
+          }
+        }
+      );
     }
-  );
+  });
+
+  con.connect(function (err) {
+    if (err) throw err;
+    con.query("SELECT * FROM regions", function (err, result) {
+      if (err) throw err;
+      result.forEach((row) => {
+        client.index(
+          {
+            index: "index_regions",
+            body: {
+              name_suggest: row.name,
+            },
+          },
+          function (err, resp, status) {
+            console.log(resp);
+          }
+        );
+      });
+      res.send("Indexing completed");
+    });
+  });
 });
 
 app.delete("/remove_index", function (req, res) {
