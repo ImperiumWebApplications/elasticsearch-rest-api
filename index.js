@@ -3,17 +3,7 @@ const elasticsearch = require("elasticsearch");
 
 const app = express();
 const client = new elasticsearch.Client({
-  hosts: [
-    {
-      protocol: "http",
-      host: "127.0.0.1",
-      port: 9200,
-      auth: {
-        username: "elastic",
-        password: " f7xzcqmqiHdCvcAPt*M_",
-      },
-    },
-  ],
+  hosts: ["http://elastic:f7xzcqmqiHdCvcAPt*M_@localhost:9200"],
 });
 
 app.get("/search", function (req, res) {
