@@ -1,17 +1,46 @@
 const express = require("express");
 const elasticsearch = require("elasticsearch");
 const mysql = require("mysql");
+const AWS = require("aws-sdk");
 
 const app = express();
-const client = new elasticsearch.Client({
-  hosts: ["http://elastic:f7xzcqmqiHdCvcAPt*M_@localhost:9200"],
+
+let con, client, esPassword;
+
+const secretsManager = new AWS.SecretsManager({
+  region: "eu-central-1",
 });
 
-const con = mysql.createConnection({
-  host: "leadquelle-master.cn6avsqv5zrn.eu-central-1.rds.amazonaws.com",
-  user: "admin",
-  password: "fZBdu5MDEmUa1Hv3FFTc",
-  database: "regions_master",
+secretsManager.getSecretValue(
+  { SecretId: "LeadquelleMasterRDSDatabaseInstance" },
+  (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      const secret = JSON.parse(data.SecretString);
+
+      con = mysql.createConnection({
+        host: secret.host,
+        user: secret.username,
+        password: secret.password,
+        database: "regions_master",
+      });
+    }
+  }
+);
+
+secretsManager.getSecretValue({ SecretId: "es_secret" }, (err, data) => {
+  if (err) {
+    console.error(err);
+  } else {
+    const secret = JSON.parse(data.SecretString);
+
+    esPassword = secret.password;
+
+    client = new elasticsearch.Client({
+      hosts: [`http://elastic:${esPassword}@localhost:9200`],
+    });
+  }
 });
 
 app.post("/index", function (req, res) {
