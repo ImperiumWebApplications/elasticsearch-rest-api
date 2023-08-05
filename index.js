@@ -12,9 +12,11 @@ app.get("/search", function (req, res) {
       index: "index_regions",
       body: {
         suggest: {
-          text: req.query.text,
-          completion: {
-            field: "name",
+          regions_suggestor: {
+            prefix: req.query.text,
+            completion: {
+              field: "name",
+            },
           },
         },
       },
