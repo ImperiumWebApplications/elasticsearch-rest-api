@@ -83,7 +83,7 @@ app.get("/search", function (req, res) {
       body: {
         suggest: {
           regions_suggestor: {
-            prefix: req.query.text,
+            prefix: req.query.region,
             completion: {
               field: "name_suggest",
             },
