@@ -15,7 +15,7 @@ app.get("/search", function (req, res) {
           regions_suggestor: {
             prefix: req.query.text,
             completion: {
-              field: "name",
+              field: "name_suggest",
             },
           },
         },
