@@ -38,7 +38,7 @@ secretsManager.getSecretValue({ SecretId: "es_secret" }, (err, data) => {
     esPassword = secret.password;
 
     client = new elasticsearch.Client({
-      hosts: [`http://elastic:${esPassword}@localhost:9200`],
+      hosts: [`http://elastic:${esPassword.trim()}@localhost:9200`],
     });
   }
 });
