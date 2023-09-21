@@ -76,7 +76,11 @@ const queryAndIndexData = async () => {
               country_code: row.country_code,
             },
           });
-          console.log(`Indexed row: ${JSON.stringify(row)}, Response: ${JSON.stringify(resp)}`);
+          console.log(
+            `Indexed row: ${JSON.stringify(row)}, Response: ${JSON.stringify(
+              resp
+            )}`
+          );
         }
         resolve("Indexing completed");
       });
@@ -95,25 +99,23 @@ app.post("/index", async (req, res) => {
   }
 });
 
-app.delete("/remove_index", function (req, res) {
-  client.indices.delete(
-    { index: "index_regions" },
-    function (err, resp, status) {
-      if (err) {
-        console.log(err);
-      } else {
-        res.send("Index deleted");
-      }
-    }
-  );
+app.delete("/remove_index", async (req, res) => {
+  try {
+    const resp = await client.indices.delete({ index: "index_regions" });
+    console.log(`Response from delete operation: ${JSON.stringify(resp)}`);
+    res.send("Index deleted");
+  } catch (err) {
+    console.log(`Error occurred while deleting index: ${err}`);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
-app.get("/search", function (req, res) {
-  // Parse the countries query parameter into an array
-  const countries = req.query.countries ? req.query.countries.split(",") : [];
+app.get("/search", async (req, res) => {
+  try {
+    // Parse the countries query parameter into an array
+    const countries = req.query.countries ? req.query.countries.split(",") : [];
 
-  client.search(
-    {
+    const response = await client.search({
       index: "index_regions",
       body: {
         suggest: {
@@ -125,22 +127,23 @@ app.get("/search", function (req, res) {
           },
         },
       },
-    },
-    function (error, response, status) {
-      if (error) {
-        console.log("search error: " + error);
-        res.status(500).send(error);
-      } else {
-        // Post-process to filter by country_code
-        const filteredSuggestions = response.suggest.regions_suggestor[0].options.filter(option => {
-          return countries.includes(option._source.country_code);
-        });
+    });
 
-        res.send({ suggest: { regions_suggestor: [ { options: filteredSuggestions } ] } });
-      }
-    }
-  );
+    // Post-process to filter by country_code
+    const filteredSuggestions =
+      response.suggest.regions_suggestor[0].options.filter((option) => {
+        return countries.includes(option._source.country_code);
+      });
+
+    res.send({
+      suggest: { regions_suggestor: [{ options: filteredSuggestions }] },
+    });
+  } catch (error) {
+    console.log(`Search error: ${error}`);
+    res.status(500).send("Internal Server Error");
+  }
 });
+
 app.listen(3000, function () {
   console.log("Example app listening on port 3000!");
 });
