@@ -49,14 +49,37 @@ const createIndexIfNotExists = async () => {
     await client.indices.create({
       index: "index_regions",
       body: {
+        settings: {
+          analysis: {
+            tokenizer: {
+              edge_ngram_tokenizer: {
+                type: "edge_ngram",
+                min_gram: 2,
+                max_gram: 25,
+                token_chars: ["letter"],
+              },
+            },
+            analyzer: {
+              edge_ngram_analyzer: {
+                type: "custom",
+                tokenizer: "edge_ngram_tokenizer",
+              },
+            },
+          },
+        },
         mappings: {
           properties: {
             name_suggest: { type: "completion" },
             name_keyword: { type: "keyword" },
+            name_partial: {
+              type: "text",
+              analyzer: "edge_ngram_analyzer",
+            },
           },
         },
       },
     });
+
     console.log("Index created");
   } else {
     console.log("Index already exists");
@@ -124,10 +147,7 @@ app.get("/search", async (req, res) => {
           bool: {
             should: [
               {
-                prefix: { name_keyword: req.query.region },
-              },
-              {
-                // your existing suggester logic can also go here if needed
+                match: { name_partial: req.query.region },
               },
             ],
           },
