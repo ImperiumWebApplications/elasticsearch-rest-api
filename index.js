@@ -52,6 +52,7 @@ const createIndexIfNotExists = async () => {
         mappings: {
           properties: {
             name_suggest: { type: "completion" },
+            name_keyword: { type: "keyword" },
           },
         },
       },
@@ -119,12 +120,16 @@ app.get("/search", async (req, res) => {
     const response = await client.search({
       index: "index_regions",
       body: {
-        suggest: {
-          regions_suggestor: {
-            prefix: req.query.region,
-            completion: {
-              field: "name_suggest",
-            },
+        query: {
+          bool: {
+            should: [
+              {
+                prefix: { name_keyword: req.query.region },
+              },
+              {
+                // your existing suggester logic can also go here if needed
+              },
+            ],
           },
         },
       },
