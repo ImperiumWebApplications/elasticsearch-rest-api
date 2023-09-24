@@ -155,14 +155,12 @@ app.get("/search", async (req, res) => {
     });
 
     // Post-process to filter by country_code
-    const filteredSuggestions =
-      response.suggest.regions_suggestor[0].options.filter((option) => {
-        return countries.includes(option._source.country_code);
-      });
+    // const filteredSuggestions =
+    //   response.suggest.regions_suggestor[0].options.filter((option) => {
+    //     return countries.includes(option._source.country_code);
+    //   });
 
-    res.send({
-      suggest: { regions_suggestor: [{ options: filteredSuggestions }] },
-    });
+    res.send(response);
   } catch (error) {
     console.log(`Search error: ${error}`);
     res.status(500).send("Internal Server Error");
