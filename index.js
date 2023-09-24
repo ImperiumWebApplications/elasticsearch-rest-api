@@ -70,7 +70,6 @@ const createIndexIfNotExists = async () => {
         mappings: {
           properties: {
             name_suggest: { type: "completion" },
-            name_keyword: { type: "keyword" },
             name_partial: {
               type: "text",
               analyzer: "edge_ngram_analyzer",
