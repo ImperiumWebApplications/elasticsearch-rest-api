@@ -123,6 +123,9 @@ app.get("/search", async (req, res) => {
             prefix: req.query.region,
             completion: {
               field: "name_suggest",
+              fuzzy: {
+                fuzziness: 2,
+              },
             },
           },
         },
