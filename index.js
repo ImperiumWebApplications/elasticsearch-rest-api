@@ -49,36 +49,13 @@ const createIndexIfNotExists = async () => {
     await client.indices.create({
       index: "index_regions",
       body: {
-        settings: {
-          analysis: {
-            tokenizer: {
-              edge_ngram_tokenizer: {
-                type: "edge_ngram",
-                min_gram: 2,
-                max_gram: 25,
-                token_chars: ["letter"],
-              },
-            },
-            analyzer: {
-              edge_ngram_analyzer: {
-                type: "custom",
-                tokenizer: "edge_ngram_tokenizer",
-              },
-            },
-          },
-        },
         mappings: {
           properties: {
             name_suggest: { type: "completion" },
-            name_partial: {
-              type: "text",
-              analyzer: "edge_ngram_analyzer",
-            },
           },
         },
       },
     });
-
     console.log("Index created");
   } else {
     console.log("Index already exists");
@@ -142,25 +119,26 @@ app.get("/search", async (req, res) => {
     const response = await client.search({
       index: "index_regions",
       body: {
-        query: {
-          bool: {
-            should: [
-              {
-                match: { name_partial: req.query.region },
-              },
-            ],
+        suggest: {
+          regions_suggestor: {
+            prefix: req.query.region,
+            completion: {
+              field: "name_suggest",
+            },
           },
         },
       },
     });
 
     // Post-process to filter by country_code
-    // const filteredSuggestions =
-    //   response.suggest.regions_suggestor[0].options.filter((option) => {
-    //     return countries.includes(option._source.country_code);
-    //   });
+    const filteredSuggestions =
+      response.suggest.regions_suggestor[0].options.filter((option) => {
+        return countries.includes(option._source.country_code);
+      });
 
-    res.send(response);
+    res.send({
+      suggest: { regions_suggestor: [{ options: filteredSuggestions }] },
+    });
   } catch (error) {
     console.log(`Search error: ${error}`);
     res.status(500).send("Internal Server Error");
