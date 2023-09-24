@@ -125,7 +125,7 @@ app.get("/search", async (req, res) => {
             completion: {
               field: "name_suggest",
               fuzzy: {
-                fuzziness: 1,
+                fuzziness: 5,
               },
             },
           },
