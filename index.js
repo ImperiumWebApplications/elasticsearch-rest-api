@@ -71,6 +71,7 @@ const queryAndIndexData = async () => {
         for (const row of result) {
           const resp = await client.index({
             index: "index_regions",
+            id: row.id,
             body: {
               name_suggest: row.name,
               country_code: row.country_code,
